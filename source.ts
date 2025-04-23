@@ -3,7 +3,13 @@ import {
   ensureDir,
   ensureDirSync,
 } from "https://deno.land/std@0.149.0/fs/mod.ts";
-import { consoleLogger, delay, ldAPIRequest, writeSourceData } from "./utils.ts";
+import {
+  consoleLogger,
+  delay,
+  ldAPIRequest,
+  rateLimitRequest,
+  writeSourceData,
+} from "./utils.ts";
 
 interface Arguments {
   projKey: string;
@@ -26,8 +32,8 @@ const projResp = await fetch(
   ldAPIRequest(
     inputArgs.apikey,
     inputArgs.domain,
-    `projects/${inputArgs.projKey}?expand=environments`,
-  ),
+    `projects/${inputArgs.projKey}?expand=environments`
+  )
 );
 if (projResp == null) {
   console.log("Failed getting project");
@@ -40,19 +46,17 @@ await writeSourceData(projPath, "project", projData);
 // Segment Data //
 
 if (projData.environments.items.length > 0) {
-  
   console.log(`Found ${projData.environments.items.length} environments`);
 
   projData.environments.items.forEach(async (env: any) => {
-
     console.log(`Getting Segments for environment: ${env.key}`);
 
     const segmentResp = await fetch(
       ldAPIRequest(
         inputArgs.apikey,
         inputArgs.domain,
-        `segments/${inputArgs.projKey}/${env.key}`,
-      ),
+        `segments/${inputArgs.projKey}/${env.key}`
+      )
     );
     if (segmentResp == null) {
       console.log("Failed getting Segments");
@@ -67,22 +71,17 @@ if (projData.environments.items.length > 0) {
 }
 
 // Get List of all Flags
-const pageSize : number = 5;
+const pageSize: number = 5;
 let offset: number = 0;
-let moreFlags : boolean = true;
-const flags : string[] = [];
+let moreFlags: boolean = true;
+const flags: string[] = [];
 let path = `flags/${inputArgs.projKey}?summary=true&limit=${pageSize}&offset=${offset}`;
 
 while (moreFlags) {
-
   console.log(`Building flag list: ${offset} to ${offset + pageSize}`);
 
   const flagsResp = await fetch(
-    ldAPIRequest(
-      inputArgs.apikey,
-      inputArgs.domain,
-      path,
-    ),
+    ldAPIRequest(inputArgs.apikey, inputArgs.domain, path)
   );
 
   if (flagsResp.status > 201) {
@@ -96,7 +95,7 @@ while (moreFlags) {
 
   const flagsData = await flagsResp.json();
 
-  flags.push( ...flagsData.items.map((flag: any) => flag.key) );
+  flags.push(...flagsData.items.map((flag: any) => flag.key));
 
   if (flagsData._links.next) {
     offset += pageSize;
@@ -114,8 +113,7 @@ await writeSourceData(projPath, "flags", flags);
 ensureDirSync(`${projPath}/flags`);
 
 for (const [index, flagKey] of flags.entries()) {
-
-  console.log(`Getting flag ${index + 1} of ${flags.length}: ${flagKey}`)
+  console.log(`Getting flag ${index + 1} of ${flags.length}: ${flagKey}`);
 
   await delay(200);
 
@@ -123,11 +121,14 @@ for (const [index, flagKey] of flags.entries()) {
     ldAPIRequest(
       inputArgs.apikey,
       inputArgs.domain,
-      `flags/${inputArgs.projKey}/${flagKey}`,
-    ),
+      `flags/${inputArgs.projKey}/${flagKey}`
+    )
   );
   if (flagResp.status > 201) {
-    consoleLogger(flagResp.status, `Error getting flag '${flagKey}': ${flagResp.status}`);
+    consoleLogger(
+      flagResp.status,
+      `Error getting flag '${flagKey}': ${flagResp.status}`
+    );
     consoleLogger(flagResp.status, await flagResp.text());
   }
   if (flagResp == null) {
