@@ -80,8 +80,9 @@ let path = `flags/${inputArgs.projKey}?summary=true&limit=${pageSize}&offset=${o
 while (moreFlags) {
   console.log(`Building flag list: ${offset} to ${offset + pageSize}`);
 
-  const flagsResp = await fetch(
-    ldAPIRequest(inputArgs.apikey, inputArgs.domain, path)
+  const flagsResp = await rateLimitRequest(
+    ldAPIRequest(inputArgs.apikey, inputArgs.domain, path),
+    path
   );
 
   if (flagsResp.status > 201) {
