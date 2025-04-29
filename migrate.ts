@@ -8,7 +8,6 @@ import {
   ldAPIPatchRequest,
   ldAPIPostRequest,
   rateLimitRequest,
-  delay
 } from "./utils.ts";
 import * as Colors from "https://deno.land/std/fmt/colors.ts";
 
