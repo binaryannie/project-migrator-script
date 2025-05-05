@@ -52,7 +52,7 @@ if (projData.environments.items.length > 0) {
       ldAPIRequest(
         inputArgs.apikey,
         inputArgs.domain,
-        `segments/${inputArgs.projKey}/${env.key}`
+        `segments/${inputArgs.projKey}/${env.key}?limit=50`
       )
     );
     if (segmentResp == null) {
